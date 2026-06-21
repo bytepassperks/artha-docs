@@ -40,7 +40,7 @@ cd "$ROOT"
 # ── Configuration ─────────────────────────────────────────────────────────────
 UPSTREAM_REMOTE="upstream"
 UPSTREAM_BRANCH="release"
-FORK_BRANCH="main"
+FORK_BRANCH="artha"
 SCALINGO_APP="artha-docs"
 SCALINGO_REGION="osc-fr1"
 LIVE_URL="https://artha-docs.osc-fr1.scalingo.io"
