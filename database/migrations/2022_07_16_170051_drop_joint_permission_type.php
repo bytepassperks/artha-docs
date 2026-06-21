@@ -16,11 +16,10 @@ return new class extends Migration
             ->where('action', '!=', 'view')
             ->delete();
 
-        Schema::table('joint_permissions', function (Blueprint $table) {
-            $table->dropPrimary(['role_id', 'entity_type', 'entity_id', 'action']);
-            $table->dropColumn('action');
-            $table->primary(['role_id', 'entity_type', 'entity_id'], 'joint_primary');
-        });
+        // Swap the primary key in a single ALTER so the table is never momentarily
+        // without a primary key (rejected by managed MySQL with
+        // sql_require_primary_key=ON, e.g. Scalingo).
+        DB::statement('ALTER TABLE joint_permissions DROP PRIMARY KEY, DROP COLUMN action, ADD PRIMARY KEY (role_id, entity_type, entity_id)');
     }
 
     /**
