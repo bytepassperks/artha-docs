@@ -1,0 +1,6 @@
+{
+  "name": "Artha Docs",
+  "scripts": {
+    "postdeploy": "php artisan migrate --force && php artisan cache:clear"
+  }
+}

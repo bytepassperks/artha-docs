@@ -10,21 +10,24 @@
 
 return [
 
-    'app-name'             => 'BookStack',
-    'app-logo'             => '',
+    // Artha Business OS branding. Env-driven so upstream merges stay clean and
+    // Scalingo can override without a code change. Indigo #202870 / gold #E0B030.
+    'app-name'             => env('APP_NAME', 'Artha Docs'),
+    'app-logo'             => env('APP_LOGO', '/artha-logo.png'),
+    'app-icon'             => env('APP_ICON', '/icon.png'),
     'app-name-header'      => true,
     'app-editor'           => 'wysiwyg',
-    'app-color'            => '#206ea7',
-    'app-color-light'      => 'rgba(32,110,167,0.15)',
-    'link-color'           => '#206ea7',
+    'app-color'            => env('APP_COLOR', '#202870'),
+    'app-color-light'      => env('APP_COLOR_LIGHT', 'rgba(32,40,112,0.12)'),
+    'link-color'           => env('APP_LINK_COLOR', '#202870'),
     'bookshelf-color'      => '#a94747',
     'book-color'           => '#077b70',
     'chapter-color'        => '#af4d0d',
-    'page-color'           => '#206ea7',
+    'page-color'           => '#202870',
     'page-draft-color'     => '#7e50b1',
-    'app-color-dark'       => '#195785',
-    'app-color-light-dark' => 'rgba(32,110,167,0.15)',
-    'link-color-dark'      => '#429fe3',
+    'app-color-dark'       => env('APP_COLOR_DARK', '#7782e6'),
+    'app-color-light-dark' => env('APP_COLOR_LIGHT_DARK', 'rgba(119,130,230,0.15)'),
+    'link-color-dark'      => env('APP_LINK_COLOR_DARK', '#9aa3f0'),
     'bookshelf-color-dark' => '#ff5454',
     'book-color-dark'      => '#389f60',
     'chapter-color-dark'   => '#ee7a2d',

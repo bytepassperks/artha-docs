@@ -145,6 +145,9 @@ return [
         BookStack\App\Providers\TranslationServiceProvider::class,
         BookStack\App\Providers\ValidationRuleServiceProvider::class,
         BookStack\App\Providers\ViewTweaksServiceProvider::class,
+
+        // Artha Business OS suite integration (SSO consumer)
+        BookStack\Artha\ArthaServiceProvider::class,
     ])->toArray(),
 
     // Class Aliases
