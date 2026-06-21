@@ -382,4 +382,7 @@ Route::view('/help/wysiwyg', 'help.wysiwyg');
 Route::get('/theme/{theme}/{path}', [ThemeController::class, 'publicFile'])
     ->where('path', '.*$');
 
+// Artha Business OS — suite single sign-on consumer (isolated for clean merges).
+require __DIR__ . '/artha.php';
+
 Route::fallback([MetaController::class, 'notFound'])->name('fallback');

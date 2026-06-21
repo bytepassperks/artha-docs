@@ -6,21 +6,22 @@ namespace BookStack\Artha;
 
 use BookStack\Access\LoginService;
 use BookStack\Access\RegistrationService;
-use BookStack\Users\Models\User;
+use BookStack\Exceptions\UserRegistrationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Throwable;
 
 /*
 | Single sign-on consumer for the Artha Business OS. The Artha CRM (identity
 | provider) mints a short-lived HMAC token for a signed-in user and hands off
-| here. We verify the signature + expiry, then log the matching user in —
-| auto-provisioning a BookStack user with the default role on first arrival.
-| Additive + feature-flagged: with no shared secret this is a no-op, so the
-| existing password / social login is never affected.
+| here. We verify the signature + expiry, then log the matching user in via
+| BookStack's own external-auth provisioning (findOrRegister + LoginService) —
+| the exact path the native OIDC integration uses, so default roles, activity
+| logging and login gates all behave identically. No second password prompt.
 |
-| Isolated in app/Artha so upstream BookStack updates merge without conflict.
+| Additive + feature-flagged: with no shared secret this is a no-op, so the
+| existing password / OIDC / SAML login is never affected. Isolated in
+| app/Artha so upstream BookStack updates merge without conflict.
 */
 class SsoController
 {
@@ -38,42 +39,37 @@ class SsoController
             return redirect('/login')->with('error', 'Artha single sign-on is not enabled.');
         }
 
+        if (auth()->check()) {
+            return redirect(config('artha.sso.home', '/'));
+        }
+
         $claims = $this->verify((string) $request->query('artha_sso', ''), $secret);
 
         if ($claims === null) {
-            return redirect('/login')->with('error', 'Your Artha sign-in link was invalid or has expired.');
+            return redirect('/login')->with('error', 'Your Artha sign-in link was invalid or has expired. Please log in.');
         }
 
         try {
-            $user = $this->resolveUser($claims['email'], $claims['name']);
-            $this->loginService->login($user, 'artha-sso');
-        } catch (Throwable) {
+            $user = $this->registrationService->findOrRegister(
+                $claims['name'],
+                $claims['email'],
+                'artha:' . mb_strtolower($claims['email']),
+            );
+        } catch (UserRegistrationException) {
             return redirect('/login')->with('error', 'We could not sign you in from Artha. Please log in.');
         }
 
-        return redirect('/');
-    }
+        $this->loginService->login($user, 'artha');
 
-    protected function resolveUser(string $email, string $name): User
-    {
-        $existing = User::query()->whereRaw('LOWER(email) = ?', [mb_strtolower($email)])->first();
-
-        if ($existing instanceof User) {
-            return $existing;
-        }
-
-        return $this->registrationService->registerUser([
-            'name' => $name,
-            'email' => $email,
-            'password' => Str::random(32),
-            'external_auth_id' => $email,
-        ], null, true);
+        return redirect(config('artha.sso.home', '/'));
     }
 
     /**
+     * Verify the CRM-minted HMAC token and return its trusted claims.
+     *
      * @return array{email: string, name: string}|null
      */
-    protected function verify(string $token, string $secret): ?array
+    private function verify(string $token, string $secret): ?array
     {
         if (substr_count($token, '.') !== 1) {
             return null;
@@ -108,12 +104,12 @@ class SsoController
         return ['email' => $email, 'name' => $name];
     }
 
-    protected function base64UrlEncode(string $value): string
+    private function base64UrlEncode(string $value): string
     {
         return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
     }
 
-    protected function base64UrlDecode(string $value): string
+    private function base64UrlDecode(string $value): string
     {
         return (string) base64_decode(strtr($value, '-_', '+/'), true);
     }
